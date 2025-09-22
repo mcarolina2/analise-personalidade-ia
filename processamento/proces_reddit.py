@@ -6,9 +6,9 @@ import nltk
 
 nltk.download("vader_lexicon")
 
-# ----------------------------
+
 # Config
-# ----------------------------
+
 INPUT_CSV = "../dados/comentarios_ia_bruto.csv"            
 OUTPUT_CSV = "../saidas/Output_reddit_CSV.csv"
 SPACY_MODEL = "en_core_web_sm"    
@@ -24,9 +24,8 @@ pattern_ia = re.compile(r"\b(?:{})\b".format("|".join(re.escape(t) for t in ia_t
                         flags=re.IGNORECASE)
 
 
-# ----------------------------
 # Função de sentimento
-# ----------------------------
+
 def analisar_sentimento(texto: str) -> str:
     scores = sia.polarity_scores(texto)
     compound = scores["compound"]
@@ -37,11 +36,11 @@ def analisar_sentimento(texto: str) -> str:
     else:
         return "neutro"
 
-# ----------------------------
-# Funções
-# ----------------------------
+
+# Função para limpar:
+
 def clean_text(text: str) -> str:
-    """Limpa links, menções e caracteres estranhos."""
+  
     if not isinstance(text, str):
         return ""
     s = text.replace("\n", " ").strip()
@@ -57,15 +56,15 @@ def mentions_ia(text: str) -> bool:
     return bool(pattern_ia.search(text))
 
 
-# ----------------------------
+
 # Carregar modelo spaCy
-# ----------------------------
+
 nlp = spacy.load(SPACY_MODEL, disable=["ner"])
 nlp.max_length = 2000000
 
-# ----------------------------
+
 # Ler CSV e processar
-# ----------------------------
+
 df = pd.read_csv(INPUT_CSV, encoding="utf-8")
 
 df["cleaned"] = df["comment"].astype(str).apply(clean_text)
@@ -75,9 +74,9 @@ df["mentions_ia"] = df["cleaned"].apply(mentions_ia)
 df_filtered = df[df["mentions_ia"]].reset_index(drop=True)
 print(f"Total: {len(df)} — com IA: {len(df_filtered)}")
 
-# ----------------------------
+
 # Processamento NLP
-# ----------------------------
+
 rows_out = []
 
 for doc, (_, row) in zip(nlp.pipe(df_filtered["cleaned"], batch_size=50), df_filtered.iterrows()):
@@ -110,9 +109,7 @@ for doc, (_, row) in zip(nlp.pipe(df_filtered["cleaned"], batch_size=50), df_fil
         "sentimento": analisar_sentimento(row["cleaned"])
     })
 
-# ----------------------------
 # Salvar resultado
-# ----------------------------
 
 df_out = pd.DataFrame(rows_out)
 df_out.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
