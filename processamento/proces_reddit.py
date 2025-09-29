@@ -1,18 +1,18 @@
 import re
 import pandas as pd
 import spacy
-from nltk.sentiment import SentimentIntensityAnalyzer
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk 
 
+# Baixar o léxico do VADER
 nltk.download("vader_lexicon")
 
-
 # Config
-
 INPUT_CSV = "../dados/comentarios_ia_bruto.csv"            
 OUTPUT_CSV = "../saidas/Output_reddit_CSV.csv"
 SPACY_MODEL = "en_core_web_sm"    
 
+# Iniciar VADER
 sia = SentimentIntensityAnalyzer()
 
 # termos IA
@@ -25,7 +25,6 @@ pattern_ia = re.compile(r"\b(?:{})\b".format("|".join(re.escape(t) for t in ia_t
 
 
 # Função de sentimento
-
 def analisar_sentimento(texto: str) -> str:
     scores = sia.polarity_scores(texto)
     compound = scores["compound"]
@@ -38,9 +37,7 @@ def analisar_sentimento(texto: str) -> str:
 
 
 # Função para limpar:
-
 def clean_text(text: str) -> str:
-  
     if not isinstance(text, str):
         return ""
     s = text.replace("\n", " ").strip()
@@ -56,15 +53,12 @@ def mentions_ia(text: str) -> bool:
     return bool(pattern_ia.search(text))
 
 
-
 # Carregar modelo spaCy
-
 nlp = spacy.load(SPACY_MODEL, disable=["ner"])
 nlp.max_length = 2000000
 
 
 # Ler CSV e processar
-
 df = pd.read_csv(INPUT_CSV, encoding="utf-8")
 
 df["cleaned"] = df["comment"].astype(str).apply(clean_text)
@@ -76,7 +70,6 @@ print(f"Total: {len(df)} — com IA: {len(df_filtered)}")
 
 
 # Processamento NLP
-
 rows_out = []
 
 for doc, (_, row) in zip(nlp.pipe(df_filtered["cleaned"], batch_size=50), df_filtered.iterrows()):
@@ -110,7 +103,6 @@ for doc, (_, row) in zip(nlp.pipe(df_filtered["cleaned"], batch_size=50), df_fil
     })
 
 # Salvar resultado
-
 df_out = pd.DataFrame(rows_out)
 df_out.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
 print(f"Processamento salvo em {OUTPUT_CSV}")
