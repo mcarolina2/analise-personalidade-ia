@@ -4,18 +4,14 @@ import spacy
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk 
 
-# Baixar o léxico do VADER
 nltk.download("vader_lexicon")
-
 # Config
 INPUT_CSV = "../dados/comentarios_ia_bruto.csv"            
 OUTPUT_CSV = "../saidas/Output_reddit_CSV.csv"
 SPACY_MODEL = "en_core_web_sm"    
 
-# Iniciar VADER
 sia = SentimentIntensityAnalyzer()
 
-# termos IA
 ia_terms = [
     "ai", "artificial intelligence", "inteligencia artificial", "inteligência artificial",
     "chatgpt", "gpt", "llm", "language model", "machine learning"
@@ -24,7 +20,6 @@ pattern_ia = re.compile(r"\b(?:{})\b".format("|".join(re.escape(t) for t in ia_t
                         flags=re.IGNORECASE)
 
 
-# Função de sentimento
 def analisar_sentimento(texto: str) -> str:
     scores = sia.polarity_scores(texto)
     compound = scores["compound"]
@@ -35,8 +30,6 @@ def analisar_sentimento(texto: str) -> str:
     else:
         return "neutro"
 
-
-# Função para limpar:
 def clean_text(text: str) -> str:
     if not isinstance(text, str):
         return ""
